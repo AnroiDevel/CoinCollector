@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 3dabbff79b700e644b3180283ed814ee
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Smile
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 86703a2b927295d498f9911f7cf8e647, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

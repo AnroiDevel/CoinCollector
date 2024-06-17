@@ -13,10 +13,12 @@ namespace CoinCollector
         private Coroutine _speedBoostCoroutine;
         private bool _isSpeedBoosted = false;
         private Vector2 _currentVelocity = Vector2.zero;
+        private float _defaultMoveSpeed;
         public int CoinCount => _coinCount;
 
         protected virtual void Start()
         {
+            _defaultMoveSpeed = _moveSpeed;
             _rb = GetComponent<Rigidbody2D>();
             _mainCamera = Camera.main;
         }
@@ -24,12 +26,12 @@ namespace CoinCollector
         protected virtual void Update()
         {
             ProcessInputs();
+            RestrictMovement(); // Вызываем здесь, если нужно ограничить перемещение каждый кадр
         }
 
         protected virtual void FixedUpdate()
         {
             Move();
-            RestrictMovement();
         }
 
         protected virtual void ProcessInputs()
@@ -55,26 +57,19 @@ namespace CoinCollector
 
         public void ApplySpeedBoost(float duration, float multiplier)
         {
-            if(_speedBoostCoroutine != null)
+            if(!_isSpeedBoosted)
             {
-                StopCoroutine(_speedBoostCoroutine);
-                _moveSpeed /= 2; // Reset the speed boost before starting a new one
-                _isSpeedBoosted = false;
+                _speedBoostCoroutine = StartCoroutine(SpeedBoost(duration, multiplier));
+                _isSpeedBoosted = true;
             }
-
-            _speedBoostCoroutine = StartCoroutine(SpeedBoost(duration, multiplier));
         }
+
+        public void SetSpeedLevel(Level level) => _moveSpeed = _defaultMoveSpeed * (int)level / 100;
 
         private IEnumerator SpeedBoost(float duration, float multiplier)
         {
-            if(!_isSpeedBoosted)
-            {
-                _moveSpeed *= multiplier;
-                _isSpeedBoosted = true;
-            }
-
+            _moveSpeed *= multiplier;
             yield return new WaitForSeconds(duration);
-
             _moveSpeed /= multiplier;
             _isSpeedBoosted = false;
         }
@@ -83,7 +78,6 @@ namespace CoinCollector
         {
             _coinCount++;
             print(CoinCount);
-
         }
     }
 }

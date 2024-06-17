@@ -8,6 +8,7 @@ TagManager:
   - SpeedBoost
   - Obstacle
   - Wall
+  - Enemy
   layers:
   - Default
   - TransparentFX

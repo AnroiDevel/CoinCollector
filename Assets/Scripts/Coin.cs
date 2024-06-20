@@ -4,14 +4,20 @@ namespace CoinCollector
 {
     public class Coin : MonoBehaviour
     {
+        private CoinSpawner _coinSpawner;
+
         private void Start()
         {
-            GameManager.Instance.RegisterCoin(gameObject);
+            _coinSpawner = GameManager.Instance.CoinSpawner;
+            _coinSpawner.RegisterCoin(gameObject);
         }
 
         private void OnDestroy()
         {
-            GameManager.Instance.UnregisterCoin(gameObject);
+            if(_coinSpawner != null)
+            {
+                _coinSpawner.UnregisterCoin(gameObject);
+            }
         }
 
         private void OnTriggerEnter2D(Collider2D collision)

@@ -13,14 +13,11 @@ namespace CoinCollector
 
         private PlayerBaseController _secondPlayer;
 
-        private void Start()
-        {
-            _secondPlayer = _playerAI;
-        }
 
         private void Update()
         {
-            UpdateCoinCountUI();
+            if(GameManager.Instance.GameStarted)
+                UpdateCoinCountUI();
         }
 
         public void SetPlayerAI(bool isAI)
@@ -30,8 +27,10 @@ namespace CoinCollector
 
         private void UpdateCoinCountUI()
         {
-            _player1CoinCountText.text = "Player 1: " + _player1.CoinCount.ToString();
-            _player2CoinCountText.text = "Player 2: " + _secondPlayer.CoinCount.ToString();
+            var allScore = _player1.CoinCount + _secondPlayer.CoinCount;
+
+            _player1CoinCountText.text = "Монеты: " + allScore.ToString();
+            //_player2CoinCountText.text = "Player 2: " + _secondPlayer.CoinCount.ToString();
         }
     }
 }

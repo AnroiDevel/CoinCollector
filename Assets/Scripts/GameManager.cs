@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,80 +8,48 @@ namespace CoinCollector
     {
         public static GameManager Instance { get; private set; }
 
-        [SerializeField] private GameObject _coinPrefab;
-        [SerializeField] private float _spawnInterval = 2f;
+        [SerializeField] private CoinSpawner _coinSpawner;
         [SerializeField] private Text _victoryText;
         [SerializeField] private GameObject _gameWinPanel;
         [SerializeField] private GameObject _gameLoosePanel;
         [SerializeField] private AudioSource _coinSfx;
         [SerializeField] private PlayerChaserAI _dog;
+        [SerializeField] private CountdownTimer _countdownTimer;
 
         public event System.Action OnGameStart;
         public event System.Action<PlayerBaseController> OnPlayerVictory;
 
-        private List<GameObject> _coins = new();
         private PlayerBaseController[] _players;
-        private Camera _mainCamera;
         private int _playersAlive = 2;
 
-        public GameObject[] Coins => _coins.ToArray();
-
         public bool GameStarted { get; private set; } = false;
+        public CoinSpawner CoinSpawner => _coinSpawner;
 
         private void Awake()
         {
             Instance = this;
+            SetupScreenResolution();
+        }
+
+        private void SetupScreenResolution()
+        {
             Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
             Screen.SetResolution(Display.main.systemWidth, Display.main.systemHeight, true);
         }
 
         public void StartGame()
         {
-            _mainCamera = Camera.main;
             _players = FindObjectsOfType<PlayerBaseController>();
             GameStarted = true;
             OnGameStart?.Invoke();
-            StartCoroutine(SpawnCoins());
+            _coinSpawner.StartSpawning();
+            _countdownTimer.StartTimer();
         }
 
         public void SetDifficultGame(Level level)
         {
+            _countdownTimer.SetTimeRemaining(level);
             _dog.SetSpeedLevel(level);
-        }
-
-        private IEnumerator SpawnCoins()
-        {
-            while(GameStarted)
-            {
-                SpawnCoin();
-                yield return new WaitForSeconds(_spawnInterval);
-            }
-        }
-
-        private void SpawnCoin()
-        {
-            Vector3 screenBottomLeft = _mainCamera.ViewportToWorldPoint(new Vector3(0, 0, _mainCamera.nearClipPlane));
-            Vector3 screenTopRight = _mainCamera.ViewportToWorldPoint(new Vector3(1, 1, _mainCamera.nearClipPlane));
-            float xPosition = Random.Range(screenBottomLeft.x, screenTopRight.x);
-            float yPosition = Random.Range(screenBottomLeft.y, screenTopRight.y);
-            Vector3 randomPosition = new Vector3(xPosition, yPosition, 0);
-            GameObject coin = Instantiate(_coinPrefab, randomPosition, Quaternion.identity);
-            _coins.Add(coin);
-        }
-
-        public void RegisterCoin(GameObject coin)
-        {
-            _coins.Add(coin);
-        }
-
-        public void UnregisterCoin(GameObject coin)
-        {
-            _coins.Remove(coin);
-        }
-
-        public void CleanUpCoins()
-        {
-            _coins.RemoveAll(item => item == null);
         }
 
         public void RestartScene()
@@ -95,14 +61,28 @@ namespace CoinCollector
         public void CheckPlayerVictory()
         {
             _coinSfx.Play();
+            if(GetTotalCoinsCollected() >= 50)
+            {
+                HandleVictory();
+            }
+        }
+
+        private int GetTotalCoinsCollected()
+        {
+            int totalCoins = 0;
             foreach(var player in _players)
             {
-                if(player.CoinCount >= 50)
-                {
-                    GameStarted = false;
-                    OnPlayerVictory?.Invoke(player);
-                }
+                totalCoins += player.CoinCount;
             }
+            return totalCoins;
+        }
+
+        private void HandleVictory()
+        {
+            GameStarted = false;
+            OnPlayerVictory?.Invoke(null);
+            _countdownTimer.StopTimer();
+            _coinSpawner.StopSpawning();
         }
 
         public void OnPlayerDied()
@@ -116,8 +96,27 @@ namespace CoinCollector
 
         private void GameOver()
         {
-            GameStarted = false;
+            EndGame();
             _gameLoosePanel.SetActive(true);
+        }
+
+        public void OnTimerEnded()
+        {
+            GameOver();
+        }
+
+        public void PauseGame()
+        {
+            Time.timeScale = 0f;
+            _countdownTimer.PauseTimer();
+            _coinSpawner.PauseSpawning();
+        }
+
+        public void ResumeGame()
+        {
+            Time.timeScale = 1f;
+            _countdownTimer.ResumeTimer();
+            _coinSpawner.ResumeSpawning();
         }
 
         private void OnEnable()
@@ -132,13 +131,24 @@ namespace CoinCollector
 
         private void HandlePlayerVictory(PlayerBaseController player)
         {
-            GameStarted = false;
-            _victoryText.text = $"{player.name}";
+            _victoryText.text = "Победа!!";
             _gameWinPanel.SetActive(true);
+            EndGame();
+        }
 
-            foreach(var p in _players)
+        private void EndGame()
+        {
+            GameStarted = false;
+            _countdownTimer.StopTimer();
+            _coinSpawner.StopSpawning();
+            DisablePlayers();
+        }
+
+        private void DisablePlayers()
+        {
+            foreach(var player in _players)
             {
-                p.gameObject.SetActive(false);
+                player.gameObject.SetActive(false);
             }
         }
     }

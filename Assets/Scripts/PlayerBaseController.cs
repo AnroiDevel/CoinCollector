@@ -6,15 +6,17 @@ namespace CoinCollector
     public class PlayerBaseController : MonoBehaviour
     {
         [SerializeField] protected float _moveSpeed = 5f;
+        [SerializeField] private PlayerUI _playerUI;
         protected Rigidbody2D _rb;
         protected Vector2 _moveDirection;
         protected Camera _mainCamera;
         protected int _coinCount = 0;
         private Coroutine _speedBoostCoroutine;
-        private bool _isSpeedBoosted = false;
         private Vector2 _currentVelocity = Vector2.zero;
         private float _defaultMoveSpeed;
         public int CoinCount => _coinCount;
+
+        // Новые поля для UI состояния игрока
 
         protected virtual void Start()
         {
@@ -57,27 +59,44 @@ namespace CoinCollector
 
         public void ApplySpeedBoost(float duration, float multiplier)
         {
-            if(!_isSpeedBoosted)
-            {
-                _speedBoostCoroutine = StartCoroutine(SpeedBoost(duration, multiplier));
-                _isSpeedBoosted = true;
-            }
+            if(_speedBoostCoroutine != null)
+                return;
+            _speedBoostCoroutine = StartCoroutine(SpeedBoost(duration, multiplier));
         }
-
-        public void SetSpeedLevel(Level level) => _moveSpeed = _defaultMoveSpeed * (int)level / 100;
 
         private IEnumerator SpeedBoost(float duration, float multiplier)
         {
+            _playerUI.ShowStatusIcon(PlayerState.SpeedBoost); // Показать иконку ускорения
             _moveSpeed *= multiplier;
             yield return new WaitForSeconds(duration);
             _moveSpeed /= multiplier;
-            _isSpeedBoosted = false;
+            _playerUI.HideStatusIcon(); // Скрыть иконку состояния
+            StartCoroutine(StopMovement(2f)); // Останавливаем игрока на 2 секунды после ускорения
+        }
+
+        private IEnumerator StopMovement(float duration)
+        {
+            _moveSpeed = 0;
+
+            _playerUI.ShowStatusIcon(PlayerState.Stunned); // Показать иконку оглушения
+            Vector2 originalVelocity = _rb.velocity;
+            _rb.velocity = Vector2.zero;
+            yield return new WaitForSeconds(duration);
+            _rb.velocity = originalVelocity;
+            _playerUI.HideStatusIcon(); // Скрыть иконку состояния
+            _moveSpeed = _defaultMoveSpeed;
+            _speedBoostCoroutine = null;
         }
 
         public void AddCoin()
         {
             _coinCount++;
             print(CoinCount);
+        }
+
+        public void SetSpeedLevel(Level level)
+        {
+            _moveSpeed = _defaultMoveSpeed * (int)level / 100;
         }
     }
 }

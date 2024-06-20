@@ -17,10 +17,12 @@ namespace CoinCollector
 
         [SerializeField] private Image[] _imagesLevel;
         [SerializeField] private Text[] _textsLevels;
+        [SerializeField] private Toggle _selectedAIToggle;
 
         private void Start()
         {
             SelectDifficultLevel(0);
+            SelectedAI(_selectedAIToggle.isOn);
         }
 
         public void SelectedAI(bool isAI)

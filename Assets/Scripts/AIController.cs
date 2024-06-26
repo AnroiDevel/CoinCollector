@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace CoinCollector
@@ -14,7 +15,8 @@ namespace CoinCollector
         protected float _averageSpeed = 0.0f;
         protected Vector2 _lastPosition;
         protected LayerMask _obstacleLayer;
-        protected LayerMask _wallLayer;
+        protected LayerMask _dogLayer; // Новый слой для собаки
+        protected LayerMask _canLayer; // Новый слой для консервной банки
         protected float _targetCheckInterval = 1.0f; // Период проверки текущей цели
         protected float _timeSinceLastTargetCheck = 0.0f;
         protected float _edgeAvoidanceDistance = 0.5f; // Расстояние до края экрана, когда начинаем учитывать edgeAvoidance
@@ -23,7 +25,8 @@ namespace CoinCollector
         {
             base.Start();
             _obstacleLayer = LayerMask.GetMask("Obstacle");
-            _wallLayer = LayerMask.GetMask("Wall");
+            _dogLayer = LayerMask.GetMask("Dog"); // Убедитесь, что собака имеет слой "Dog"
+            _canLayer = LayerMask.GetMask("Can"); // Убедитесь, что консервная банка имеет слой "Can"
             _timeSinceLastTargetCheck = _targetCheckInterval; // Начинаем сразу с проверки
             _lastPosition = transform.position;
         }
@@ -91,22 +94,35 @@ namespace CoinCollector
         {
             Vector2 avoidance = direction;
 
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, _raycastDistance, _obstacleLayer | _wallLayer);
-            if(hit.collider != null && (hit.collider.CompareTag("Obstacle") || hit.collider.CompareTag("Wall")))
+            // Проверка всех направлений для обнаружения препятствий
+            for(int i = 0; i < 360; i += 15)
             {
-                _isStuck = true;
-                _stuckTime += Time.deltaTime;
+                Vector2 rayDirection = Quaternion.Euler(0, 0, i) * direction;
+                RaycastHit2D hit = Physics2D.Raycast(transform.position, rayDirection, _raycastDistance, _obstacleLayer | _dogLayer | _canLayer);
 
-                // Поиск направления обхода
-                Vector2 obstacleDirection = (hit.point - (Vector2)transform.position).normalized;
-                Vector2 avoidanceDirection = Vector2.Perpendicular(obstacleDirection);
-                avoidance = avoidanceDirection * _avoidanceStrength;
-                _lastValidDirection = avoidanceDirection;
+                if(hit.collider != null)
+                {
+                    if(hit.collider.CompareTag("Obstacle") || hit.collider.CompareTag("Dog") || hit.collider.CompareTag("Can"))
+                    {
+                        Debug.DrawRay(transform.position, rayDirection * _raycastDistance, Color.red);
+                        _isStuck = true;
+                        _stuckTime += Time.deltaTime;
+
+                        // Поиск направления обхода
+                        Vector2 obstacleDirection = (hit.point - (Vector2)transform.position).normalized;
+                        Vector2 avoidanceDirection = Vector2.Perpendicular(obstacleDirection);
+                        avoidance += avoidanceDirection * _avoidanceStrength;
+                        _lastValidDirection = avoidanceDirection;
+                    }
+                }
+                else
+                {
+                    Debug.DrawRay(transform.position, rayDirection * _raycastDistance, Color.green);
+                }
             }
-            else
+
+            if(!_isStuck)
             {
-                _isStuck = false;
-                _stuckTime = 0.0f;
                 _lastValidDirection = direction;
             }
 

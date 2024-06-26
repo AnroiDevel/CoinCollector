@@ -56,8 +56,7 @@ namespace CoinCollector
         {
             if(collision.gameObject.CompareTag("Player"))
             {
-                PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
-                if(playerHealth != null)
+                if(collision.gameObject.TryGetComponent<PlayerHealth>(out var playerHealth))
                 {
                     playerHealth.TakeDamage();
                 }

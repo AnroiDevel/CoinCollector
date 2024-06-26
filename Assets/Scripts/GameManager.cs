@@ -13,13 +13,21 @@ namespace CoinCollector
         [SerializeField] private GameObject _gameWinPanel;
         [SerializeField] private GameObject _gameLoosePanel;
         [SerializeField] private AudioSource _coinSfx;
-        [SerializeField] private PlayerChaserAI _dog;
         [SerializeField] private CountdownTimer _countdownTimer;
+        [SerializeField] private GameObject _exit;
+
+        [SerializeField] private PlayerBaseController _playerOne;
+        [SerializeField] private PlayerBaseController _playerTwo;
+        [SerializeField] private PlayerBaseController _playerAI;
+        [SerializeField] private PlayerChaserAI _dog;
+
+        private PlayerBaseController _secondPlayer;
 
         public event System.Action OnGameStart;
         public event System.Action<PlayerBaseController> OnPlayerVictory;
 
         private PlayerBaseController[] _players;
+
         private int _playersAlive = 2;
 
         public bool GameStarted { get; private set; } = false;
@@ -58,14 +66,27 @@ namespace CoinCollector
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
-        public void CheckPlayerVictory()
+        public void CheckVictory()
         {
             _coinSfx.Play();
-            if(GetTotalCoinsCollected() >= 50)
+            if(GetTotalCoinsCollected() >= 5)
             {
-                HandleVictory();
+                _exit.SetActive(true);
             }
         }
+
+        public void CheckAllPlayersExit()
+        {
+            if(_playersAlive <= 0)
+            {
+                EndGame();
+            }
+            else
+            {
+                _playersAlive--;
+            }
+        }
+
 
         private int GetTotalCoinsCollected()
         {
@@ -77,13 +98,6 @@ namespace CoinCollector
             return totalCoins;
         }
 
-        private void HandleVictory()
-        {
-            GameStarted = false;
-            OnPlayerVictory?.Invoke(null);
-            _countdownTimer.StopTimer();
-            _coinSpawner.StopSpawning();
-        }
 
         public void OnPlayerDied()
         {
@@ -131,13 +145,12 @@ namespace CoinCollector
 
         private void HandlePlayerVictory(PlayerBaseController player)
         {
-            _victoryText.text = "Победа!!";
-            _gameWinPanel.SetActive(true);
-            EndGame();
+            _victoryText.text = $"Победа!! Заработано {player.CoinCount}монет";
         }
 
-        private void EndGame()
+        public void EndGame()
         {
+            _gameWinPanel.SetActive(true);
             GameStarted = false;
             _countdownTimer.StopTimer();
             _coinSpawner.StopSpawning();

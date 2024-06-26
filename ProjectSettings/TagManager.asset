@@ -9,6 +9,8 @@ TagManager:
   - Obstacle
   - Wall
   - Enemy
+  - Can
+  - Dog
   layers:
   - Default
   - TransparentFX
@@ -18,8 +20,8 @@ TagManager:
   - UI
   - Obstacle
   - Wall
-  - 
-  - 
+  - Can
+  - Dog
   - 
   - 
   - 

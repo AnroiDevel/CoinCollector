@@ -9,12 +9,14 @@ namespace CoinCollector
         [SerializeField] private float _invincibilityDuration = 1.5f;
         private int _currentLives;
         private bool _isInvincible = false;
+        private PlayerUI _playerUI;
 
         public delegate void LifeChanged(int currentLives);
         public event LifeChanged LifeChangedEvent;
 
         private void Start()
         {
+            _playerUI = GetComponent<PlayerUI>();
             _currentLives = _maxLives;
             LifeChangedEvent?.Invoke(_currentLives);
         }
@@ -40,8 +42,10 @@ namespace CoinCollector
         private IEnumerator InvincibilityCoroutine()
         {
             _isInvincible = true;
+            _playerUI.ShowStatusIcon(PlayerState.Damage);
             yield return new WaitForSeconds(_invincibilityDuration);
             _isInvincible = false;
+            _playerUI.HideStatusIcon();
         }
 
         private void Die()

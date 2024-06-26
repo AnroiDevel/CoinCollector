@@ -27,7 +27,7 @@ namespace CoinCollector
                 if(collision.TryGetComponent<PlayerBaseController>(out var playerController))
                 {
                     playerController.AddCoin();
-                    GameManager.Instance.CheckPlayerVictory(); // Проверяем условия победы после подбора монеты
+                    GameManager.Instance.CheckVictory(); // Проверяем условия победы после подбора монеты
                     Destroy(gameObject);
                 }
             }
